@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import pickle
+import glob
 
 out_dir = 'output_images/'
 
@@ -13,8 +14,7 @@ with open('camera_cal/wide_dist_pickle.p', mode='rb') as f:
     dist = dist_pickle["dist"]
 
 
-def warp(img, corners = np.float32([[260, 680], [580, 460], [702, 460], [1040, 680]])):
-    #corners = np.float32([[190, 720], [589, 457], [698, 457], [1145, 720]])
+def warp(img, corners=np.float32([[260, 680], [580, 460], [702, 460], [1040, 680]])):
     new_top_left = np.array([corners[0, 0], 0])
     new_top_right = np.array([corners[3, 0], 0])
     offset = [150, 0]
@@ -24,9 +24,10 @@ def warp(img, corners = np.float32([[260, 680], [580, 460], [702, 460], [1040, 6
     dst = np.float32([corners[0] + offset, new_top_left + offset, new_top_right - offset, corners[3] - offset])
 
     M = cv2.getPerspectiveTransform(src, dst)
+    Minv = cv2.getPerspectiveTransform(dst, src)
 
     warped = cv2.warpPerspective(img, M, img_size, flags=cv2.INTER_LINEAR)
-    return warped, M
+    return warped, M, Minv
 
 
 def undistort(img):
@@ -36,58 +37,81 @@ def undistort(img):
 
 if __name__ == '__main__':
 
-    image = plt.imread('test_images/straight_lines1.jpg')
-    # corners = np.float32([[250, 720], [589, 457], [698, 457], [1145, 720]])
-    # top right, bottom right, bottom left, top left
-    corners = np.float32([[260, 680], [580, 460], [702, 460], [1040, 680]])
+    # image = plt.imread('test_images/straight_lines1.jpg')
+    # # corners = np.float32([[250, 720], [589, 457], [698, 457], [1145, 720]])
+    # # top right, bottom right, bottom left, top left
+    # corners = np.float32([[260, 680], [580, 460], [702, 460], [1040, 680]])
+    #
+    # undist_img = cv2.undistort(image, mtx, dist, None, mtx)
+    #
+    # f, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 8))
+    # f.tight_layout()
+    #
+    # ax1.imshow(image)
+    # ax1.plot(corners[0][0], corners[0][1], 'r.')  # Bottom Left
+    # ax1.plot(corners[1][0], corners[1][1], 'r.')  # TOP Left
+    # ax1.plot(corners[2][0], corners[2][1], 'r.')  # TOP Right
+    # ax1.plot(corners[3][0], corners[3][1], 'r.')  # Bottom Right
+    #
+    # ax1.set_title('Original Image', fontsize=30)
+    #
+    # ax2.imshow(undist_img)
+    # ax2.set_title('Undistorted Image', fontsize=30)
+    # ax2.plot(corners[0][0], corners[0][1], 'r.')  # Bottom Left
+    # ax2.plot(corners[1][0], corners[1][1], 'r.')  # TOP Left
+    # ax2.plot(corners[2][0], corners[2][1], 'r.')  # TOP Right
+    # ax2.plot(corners[3][0], corners[3][1], 'r.')  # Bottom Right
+    #
+    # plt.show()
+    #
+    # imshape = undist_img.shape
+    #
+    # corner_tuples = []
+    # for ind, c in enumerate(corners):
+    #     corner_tuples.append(tuple(corners[ind]))
+    #
+    # cv2.line(undist_img, corner_tuples[0], corner_tuples[1], color=[255, 0, 0], thickness=1)
+    # cv2.line(undist_img, corner_tuples[1], corner_tuples[2], color=[255, 0, 0], thickness=1)
+    # cv2.line(undist_img, corner_tuples[2], corner_tuples[3], color=[255, 0, 0], thickness=1)
+    # cv2.line(undist_img, corner_tuples[3], corner_tuples[0], color=[255, 0, 0], thickness=1)
+    #
+    # warped, _ = warp(undist_img,corners)
+    # plt.imsave(out_dir + 'test5_undistorted.jpg', undist_img)
+    # plt.imsave(out_dir + 'test5_lines1_warped.jpg', warped)
+    #
+    # # Plot the result
+    # f, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 8))
+    # f.tight_layout()
+    #
+    # ax1.imshow(image)
+    # ax1.set_title('Original', fontsize=30)
+    #
+    # ax2.imshow(warped)
+    # ax2.set_title('Warped', fontsize=30)
+    #
+    # plt.show()
 
-    undist_img = cv2.undistort(image, mtx, dist, None, mtx)
+    images = glob.glob('test_images/*.jpg')
 
-    f, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 8))
-    f.tight_layout()
+    for img in images:
+        image = plt.imread(img)
+        corners = np.float32([[260, 680], [580, 460], [702, 460], [1040, 680]])
+        undist_img = cv2.undistort(image, mtx, dist, None, mtx)
+        corner_tuples = []
+        for ind, c in enumerate(corners):
+            corner_tuples.append(tuple(corners[ind]))
 
-    ax1.imshow(image)
-    ax1.plot(corners[0][0], corners[0][1], 'r.')  # Bottom Left
-    ax1.plot(corners[1][0], corners[1][1], 'r.')  # TOP Left
-    ax1.plot(corners[2][0], corners[2][1], 'r.')  # TOP Right
-    ax1.plot(corners[3][0], corners[3][1], 'r.')  # Bottom Right
+        cv2.line(undist_img, corner_tuples[0], corner_tuples[1], color=[255, 0, 0], thickness=1)
+        cv2.line(undist_img, corner_tuples[1], corner_tuples[2], color=[255, 0, 0], thickness=1)
+        cv2.line(undist_img, corner_tuples[2], corner_tuples[3], color=[255, 0, 0], thickness=1)
+        cv2.line(undist_img, corner_tuples[3], corner_tuples[0], color=[255, 0, 0], thickness=1)
 
-    ax1.set_title('Original Image', fontsize=30)
+        warped, _, _ = warp(undist_img, corners)
 
-    ax2.imshow(undist_img)
-    ax2.set_title('Undistorted Image', fontsize=30)
-    ax2.plot(corners[0][0], corners[0][1], 'r.')  # Bottom Left
-    ax2.plot(corners[1][0], corners[1][1], 'r.')  # TOP Left
-    ax2.plot(corners[2][0], corners[2][1], 'r.')  # TOP Right
-    ax2.plot(corners[3][0], corners[3][1], 'r.')  # Bottom Right
-
-    plt.show()
-
-    imshape = undist_img.shape
-
-    corner_tuples = []
-    for ind, c in enumerate(corners):
-        corner_tuples.append(tuple(corners[ind]))
-
-    cv2.line(undist_img, corner_tuples[0], corner_tuples[1], color=[255, 0, 0], thickness=1)
-    cv2.line(undist_img, corner_tuples[1], corner_tuples[2], color=[255, 0, 0], thickness=1)
-    cv2.line(undist_img, corner_tuples[2], corner_tuples[3], color=[255, 0, 0], thickness=1)
-    cv2.line(undist_img, corner_tuples[3], corner_tuples[0], color=[255, 0, 0], thickness=1)
-
-    warped, _ = warp(undist_img,corners)
-    plt.imsave(out_dir + 'test5_undistorted.jpg', undist_img)
-    plt.imsave(out_dir + 'test5_lines1_warped.jpg', warped)
-
-    # Plot the result
-    f, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 8))
-    f.tight_layout()
-
-    ax1.imshow(image)
-    ax1.set_title('Original', fontsize=30)
-
-    ax2.imshow(warped)
-    ax2.set_title('Warped', fontsize=30)
-
-    plt.show()
+        image_name = img.split("\\")[1].split('.')[0]
+        name = "{}_undistort.jpg".format(image_name)
+        plt.imsave(out_dir + name, undist_img)
+        name = "{}_warped.jpg".format(image_name)
+        plt.imsave(out_dir + name, warped)
 
     print("Waiting")

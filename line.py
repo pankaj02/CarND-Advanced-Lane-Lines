@@ -1,3 +1,5 @@
+import numpy as np
+
 class Line():
     def __init__(self):
         # was the line detected in the last iteration?
