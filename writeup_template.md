@@ -48,23 +48,24 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 
 Then I saved the Camera Matrix and Distortion Coefficient to be used later using pickel
 
-####Original
-![alt text][image1]
+
+Original             |  Undistorted
+:-------------------------:|:-------------------------:
+![alt-text-1][image1]  |  !![alt-text-2][image2]
 
 
-####Undistorted
-![alt text][image2]
 
 ### Pipeline (single images)
 
 #### 1. Provide an example of a distortion-corrected image.
 
 To demonstrate this step, I will describe how I apply the distortion correction to one of the test images like this one:
-####Original
-![alt text][image3]
 
-####Undistorted
-![alt text][image4]
+
+Original             |  Undistorted
+:-------------------------:|:-------------------------:
+![alt-text-1][image3]  |  !![alt-text-2][image4]
+
 
 #### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
 
@@ -72,18 +73,16 @@ I used a combination of color and gradient thresholds to generate a binary image
 
 Here's an example of my output for individual steps 
 
-#### Sobel X
-![alt text][image5]
-
-#### Sobel Y
-![alt text][image6]
+Sobel X                    |  Sobel Y
+:-------------------------:|:-------------------------:
+![alt-text-1][image5]  |  !![alt-text-2][image6]
 
 
-#### Color Threshold
-![alt text][image7]
+Color Threshold            |  Gradient Magnitude
+:-------------------------:|:-------------------------:
+![alt-text-1][image7]  |  !![alt-text-2][image8]
 
-#### Gradient Magnitude
-![alt text][image8]
+
 
 #### Combined
 ![alt text][image9]
@@ -97,10 +96,11 @@ I chose the hardcode the source and destination points in the following manner:
 
 I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
 
-### Undistorted
-![alt text][image10]
-### Warped
-![alt text][image11]
+
+Undistorted                 |  Warped
+:-------------------------:|:-------------------------:
+![alt-text-1][image10]  |  !![alt-text-2][image11]
+
 
 #### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
