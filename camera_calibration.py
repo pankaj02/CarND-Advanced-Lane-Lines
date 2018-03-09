@@ -86,7 +86,7 @@ def corners_unwarp(img, nx, ny, mtx, dist):
     return warped, M
 
 
-def test_undistortion(image, objpoints, imgpoints):
+def plot_undistortion(image, objpoints, imgpoints):
     """
     Test undistortion on an image
     :param image: Image Path example - 'camera_cal/calibration1.jpg'
@@ -105,6 +105,25 @@ def test_undistortion(image, objpoints, imgpoints):
     ax1.set_title('Original Image', fontsize=30)
     ax2.imshow(dst)
     ax2.set_title('Undistorted Image', fontsize=30)
+    plt.savefig("camera_caliber.jpg")
+
+
+def save(image, objpoints, imgpoints):
+    """
+    Save undistortion on an image
+    :param image: Image Path example - 'camera_cal/calibration1.jpg'
+    :param objpoints: 3d points in real world space
+    :param imgpoints: 2d points in image plane.
+    :return: None
+    """
+    img = cv2.imread(image)
+    img_size = (img.shape[1], img.shape[0])
+    # Do camera calibration given object points and image points
+    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, img_size, None, None)
+    undst = cv2.undistort(img, mtx, dist, None, mtx)
+
+    cv2.imwrite('undist_test5.jpg',undst)
+
 
 
 def dump_matrix(image, objpoints, imgpoints):
@@ -119,10 +138,8 @@ def dump_matrix(image, objpoints, imgpoints):
     pickle.dump(dist_pickle, open(CAM_CAL_P, "wb"))
 
 
-dump_matrix()
-# dst = cv2.cvtColor(dst, cv2.COLOR_BGR2RGB)
-# Visualize undistortion
-
 if __name__ == '__main__':
     objpoints, imgpoints = corners_matrix()
-    dump_matrix('camera_cal/calibration1.jpg',objpoints,imgpoints)
+    save('test_images/test5.jpg', objpoints, imgpoints)
+
+    # dump_matrix('camera_cal/calibration1.jpg',objpoints,imgpoints)
