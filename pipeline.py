@@ -7,9 +7,13 @@ import glob
 from collections import deque
 from statistics import mean
 
+MID_X = 640
+
 first_image = True
 gleft_fit = None
 gright_fit = None
+
+OUT_DIR = 'output_images/lane_lines/'
 
 
 class AverageCoefficient:
@@ -133,16 +137,14 @@ def warp_binary_pipeline(img):
     return result, Minv
 
 
-def sliding_window_pipeline(img, visualize=False):
+def find_lane_lines(binary_warped):
     global first_image, gleft_fit, gright_fit
 
-    binary_warped, Minv = warp_binary_pipeline(img)
+    # binary_warped, Minv = warp_binary_pipeline(img)
 
     leftx = lefty = rightx = righty = left_fit = right_fit = None
     if first_image == True:
         leftx, lefty, rightx, righty, left_fit, right_fit = find_sliding_window(binary_warped)
-        if visualize:
-            visualize_image(binary_warped, leftx, lefty, rightx, righty, left_fit, right_fit)
         gleft_fit = left_fit
         gright_fit = right_fit
         first_image = False
@@ -181,15 +183,12 @@ def sliding_window_pipeline(img, visualize=False):
         left_fit = avg_left_fit.average()
         right_fit = avg_right_fit.average()
 
-        ##################Visualize
-        # Create an image to draw on and an image to show the selection window
-        if visualize:
-            visualize_image(binary_warped, leftx, lefty, rightx, righty, left_fit, right_fit)
-
-    return left_fit, right_fit, binary_warped, Minv, leftx, rightx
 
 
-def visualize_image(binary_warped, leftx, lefty, rightx, righty, left_fit, right_fit):
+    return left_fit, right_fit, leftx, lefty, rightx, righty
+
+
+def plot_lines(binary_warped, leftx, lefty, rightx, righty, left_fit, right_fit):
     # Generate x and y values for plotting
     ploty = np.linspace(0, binary_warped.shape[0] - 1, binary_warped.shape[0])
     left_fitx = left_fit[0] * ploty ** 2 + left_fit[1] * ploty + left_fit[2]
@@ -221,12 +220,13 @@ def visualize_image(binary_warped, leftx, lefty, rightx, righty, left_fit, right
     cv2.fillPoly(window_img, np.int_([left_line_pts]), (0, 255, 0))
     cv2.fillPoly(window_img, np.int_([right_line_pts]), (0, 255, 0))
     result = cv2.addWeighted(out_img, 1, window_img, 0.3, 0)
-    plt.imshow(result)
-    plt.plot(left_fitx, ploty, color='yellow')
-    plt.plot(right_fitx, ploty, color='yellow')
-    plt.xlim(0, 1280)
-    plt.ylim(720, 0)
-    plt.show()
+    return result
+    # plt.imshow(result)
+    # plt.plot(left_fitx, ploty, color='yellow')
+    # plt.plot(right_fitx, ploty, color='yellow')
+    # plt.xlim(0, 1280)
+    # plt.ylim(720, 0)
+    # plt.show()
 
 
 def find_curvature(ploty, left_fit, right_fit, leftx, rightx):
@@ -259,6 +259,9 @@ def plot_image(undist, binary_warped, left_fit, right_fit, Minv, leftx, rightx):
     left_fitx = left_fit[0] * ploty ** 2 + left_fit[1] * ploty + left_fit[2]
     right_fitx = right_fit[0] * ploty ** 2 + right_fit[1] * ploty + right_fit[2]
 
+    offset_center = find_offset_centre(left_fit, right_fit, ploty)
+
+
     # Create an image to draw the lines on
     warp_zero = np.zeros_like(binary_warped).astype(np.uint8)
     color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
@@ -283,12 +286,88 @@ def plot_image(undist, binary_warped, left_fit, right_fit, Minv, leftx, rightx):
     cv2.putText(result, 'Right Radius of Curvature: %.2fm' % right_curverad, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1,
                 (255, 255, 255), 2)
 
+    cv2.putText(result, 'Deviation: %.2fm' % offset_center, (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 1,
+                (255, 255, 255), 2)
+
     return result
 
 
+def find_offset_centre(left_fit,right_fit, ploty):
+
+    """
+    To calculate offset, calculate x_left and x_right pixel value using left_fit and right_fit coefficient.
+    We cannot use coefficient returned by earlier steps as those are on warped image
+    :param left_fit:
+    :param right_fit:
+    :param ploty:
+    :return:
+    """
+
+    y_eval = int(np.max(ploty))
+
+    xm_per_pix = 3.7 / 700
+
+    x_left = left_fit[0] * (y_eval ** 2) + left_fit[1] * y_eval + left_fit[2]
+    x_right = right_fit[0] * (y_eval ** 2) + right_fit[1] * y_eval + right_fit[2]
+    offset_center = ((x_left + x_right) / 2 - MID_X) * xm_per_pix
+
+    return offset_center
+
+
 def image_pipeline(image):
-    left_fit, right_fit, binary_warped, Minv, leftx, rightx = sliding_window_pipeline(image)
-    return plot_image(image, binary_warped, left_fit, right_fit, Minv, leftx, rightx)
+    # binary_warped, Minv = warp_binary_pipeline(img)
+
+    undist = undistort(image)
+    binary = combined_thresholds(undist)
+    binary_warped, M, Minv = warp(binary)
+
+    left_fit, right_fit, leftx, lefty, rightx, righty = find_lane_lines(binary_warped)
+
+    return plot_image(undist, binary_warped, left_fit, right_fit, Minv, leftx, rightx)
+
+
+def plot_image_pipeline(image,image_path):
+    ## Undistort Image
+    undist = undistort(image)
+    ## Apply binary threshold
+    binary = combined_thresholds(undist)
+    ## Warp Image
+    binary_warped, M, Minv = warp(binary)
+    ## find lane lines
+    leftx, lefty, rightx, righty, left_fit, right_fit = find_sliding_window(binary_warped)
+    ## lane line visualization
+    lanes = plot_lines(binary_warped, leftx, lefty, rightx, righty, left_fit, right_fit)
+    ## PLOT Lanes
+    transpose = plot_image(undist, binary_warped, left_fit, right_fit, Minv, leftx, rightx)
+
+    # Plot the result
+    f, ax = plt.subplots(2, 3, figsize=(15, 8))
+    #f, (ax1, ax2, ax3, ax4, ax5, ax6) = plt.subplot2grid(2, 3, figsize=(15, 8))
+    f.tight_layout()
+
+    ax[0][0].imshow(image)
+    ax[0][0].set_title('Original', fontsize=15)
+
+    ax[0][1].imshow(undist)
+    ax[0][1].set_title('Undistorted', fontsize=15)
+
+    ax[0][2].imshow(binary,cmap='gray')
+    ax[0][2].set_title('Binary Threshold', fontsize=15)
+
+    ax[1][0].imshow(binary_warped,cmap='gray')
+    ax[1][0].set_title('Binary Warped', fontsize=15)
+
+    ax[1][1].imshow(lanes)
+    ax[1][1].set_title('Lanes', fontsize=15)
+
+    ax[1][2].imshow(transpose)
+    ax[1][2].set_title('Lanes Applied', fontsize=15)
+
+    image_name = image_path.split("\\")[1].split('.')[0]
+    name = "{}.jpg".format(image_name)
+
+    f.savefig(OUT_DIR + name, bbox_inches='tight')
+
 
 
 if __name__ == '__main__':
@@ -299,17 +378,16 @@ if __name__ == '__main__':
     #
     # visualize(out_img, leftx, lefty, rightx, righty)
 
-    images = glob.glob('test_images/test6*.jpg')
+    images = glob.glob('test_images/*.jpg')
 
-    for image in images:
-        print(image)
-        image = plt.imread(image)
+    for image_path in images:
+        image = plt.imread(image_path)
         # left_fit, right_fit, binary_warped, Minv = sliding_window_pipeline(image)
         # find_curvature(left_fit)
         # plot_image(image, binary_warped, left_fit, right_fit, Minv)
-        result = image_pipeline(image)
-        plt.imsave('output_images/test6_final.jpg', result)
-        plt.imshow(result)
+        plot_image_pipeline(image, image_path)
+        #plt.imsave('output_images/test6_final.jpg', result)
+        #plt.imshow(result)
 
     print("Done")
 

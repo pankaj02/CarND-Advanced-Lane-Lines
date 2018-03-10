@@ -25,7 +25,8 @@ The goals / steps of this project are the following:
 [image9]: ./output_images/test5_combined_thresholds.jpg "Color Threshold"
 [image10]: ./output_images/straight_lines1_undistort.jpg "Undistorted"  
 [image11]: ./output_images/straight_lines1_warped.jpg "Warped"
-[image12]: ./output_images/test5_final.jpg "Lane Lines"
+[image12]: ./output_images/lane_lines/test3.jpg "Lane Lines"
+[image13]: ./output_images/lane_lines/test5.jpg "Lane Lines"
 
 [video11]: ./project_video_output.mp4 "Video"
 
@@ -78,12 +79,12 @@ Here's an example of my output for individual steps
 
 Sobel X                    |  Sobel Y
 :-------------------------:|:-------------------------:
-![alt-text-1][image5]  |  !![alt-text-2][image6]
+![alt-text-1][image5]  |  ![alt-text-2][image6]
 
 
 Color Threshold            |  Gradient Magnitude
 :-------------------------:|:-------------------------:
-![alt-text-1][image7]  |  !![alt-text-2][image8]
+![alt-text-1][image7]  |  ![alt-text-2][image8]
 
 
 
@@ -102,26 +103,29 @@ I verified that my perspective transform was working as expected by drawing the 
 
 Undistorted                 |  Warped
 :-------------------------:|:-------------------------:
-![alt-text-1][image10]  |  !![alt-text-2][image11]
+![alt-text-1][image10]  |  ![alt-text-2][image11]
 
 
 #### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
-I used Sliding Window approach to fit Lane line with 2nd order Polynomial. Code can be found at `pipeline.py` line 136 to 189.
-To smoothen out edges I implemented `AverageCoefficient` logic to take average of Polynomiyal Coefficients. It's based on deque and keeps average of 20 A,B and C coefficients of
+I used Sliding Window approach to fit Lane line with 2nd order Polynomial. Code can be found at `pipeline.py` method `find_lane_lines` line number 138 to 186.
+To smoothen out edges I implemented `AverageCoefficient` logic to take average of Polynomiyal Coefficients. It's based on deque and keeps average of 5 A,B and C coefficients of
 both left and right lines.
 
 ![alt text][image12]
 
 #### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
-I did this in lines 232 through 254 in my code in `pipeline.py`
+I did this in lines 232 through 254 in my code in `pipeline.py`. Offset calculation is implemented in method `find_offset_centre`.
+To calculate offset, I calculated x_left and x_right pixel value using left_fit and right_fit coefficient. I found that we cannot use coefficient returned by earlier steps as those are on warped image
 
 #### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
-I implemented this step in lines # through # in my code in `pipeline.py` in the function `plot_image`.  Here is an example of my result on a test image:
+I implemented this step in lines 255 through 284 in my code in `pipeline.py` in the function `plot_image`.  All examples on test image can be found at `./output_images/lane_lines/`
+ 
+Here is an example of my result on a test image:
 
-![alt text][image12]
+![alt text][image13]
 
 ---
 
