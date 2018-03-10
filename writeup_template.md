@@ -16,8 +16,8 @@ The goals / steps of this project are the following:
 
 [image1]: ./camera_cal/calibration1.jpg "Original"
 [image2]: ./output_images/undist_calibration1.jpg "Undistorted"
-[image3]: ./test_images/test5.jpg "Road Original"
-[image4]: ./output_images/undist_test5.jpg "Road Transformed"
+[image3]: ./output_images/undistorted/straight_lines2_undistort.jpg "Undistorted Example 1"
+[image4]: ./output_images/undistorted/test5_undistort.jpg "Undistorted Example 1"
 [image5]: ./output_images/test5_sobel_x.jpg "Sobel X"
 [image6]: ./output_images/test5_sobel_y.jpg "Sobel Y"
 [image7]: ./output_images/test5_color_thresholds.jpg "Color Threshold"
@@ -59,13 +59,16 @@ Original             |  Undistorted
 
 #### 1. Provide an example of a distortion-corrected image.
 
-To demonstrate this step, I will describe how I apply the distortion correction to one of the test images like this one:
+I used Camera matrix `mtx` and Distortion Coefficient `dist` found in previous step of camera calibration to un distort 
+the raw image from the video by using cv2.undistort function (check `camera_calibration.py` line no. 191 to 197). Following is an eaxmple of undistorted image:
 
+### Example 1
+![alt-text-1][image3]  
 
-Original             |  Undistorted
-:-------------------------:|:-------------------------:
-![alt-text-1][image3]  |  !![alt-text-2][image4]
+### Example 2
+![alt-text-2][image4]
 
+All undistorted images can be found in `./output_images/undistorted` directory
 
 #### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
 

@@ -13,10 +13,10 @@ gright_fit = None
 
 
 class AverageCoefficient:
-    def __init__(self):
-        self.a = deque(maxlen=20)
-        self.b = deque(maxlen=20)
-        self.c = deque(maxlen=20)
+    def __init__(self, max_len):
+        self.a = deque(maxlen=max_len)
+        self.b = deque(maxlen=max_len)
+        self.c = deque(maxlen=max_len)
 
     def add_coefficient(self, coefficient):
         self.a.append(coefficient[0])
@@ -28,8 +28,8 @@ class AverageCoefficient:
         return np.array(avg_coeff)
 
 
-avg_left_fit = AverageCoefficient()
-avg_right_fit = AverageCoefficient()
+avg_left_fit = AverageCoefficient(5)
+avg_right_fit = AverageCoefficient(5)
 
 
 def find_peak(binary_warped, plot=False):
@@ -186,7 +186,7 @@ def sliding_window_pipeline(img, visualize=False):
         if visualize:
             visualize_image(binary_warped, leftx, lefty, rightx, righty, left_fit, right_fit)
 
-    return left_fit, right_fit, binary_warped, Minv,leftx,rightx
+    return left_fit, right_fit, binary_warped, Minv, leftx, rightx
 
 
 def visualize_image(binary_warped, leftx, lefty, rightx, righty, left_fit, right_fit):
@@ -254,8 +254,7 @@ def find_curvature(ploty, left_fit, right_fit, leftx, rightx):
     return left_curverad, right_curverad
 
 
-def plot_image(undist, binary_warped, left_fit, right_fit, Minv,leftx,rightx):
-
+def plot_image(undist, binary_warped, left_fit, right_fit, Minv, leftx, rightx):
     ploty = np.linspace(0, binary_warped.shape[0] - 1, binary_warped.shape[0])
     left_fitx = left_fit[0] * ploty ** 2 + left_fit[1] * ploty + left_fit[2]
     right_fitx = right_fit[0] * ploty ** 2 + right_fit[1] * ploty + right_fit[2]
@@ -277,7 +276,7 @@ def plot_image(undist, binary_warped, left_fit, right_fit, Minv,leftx,rightx):
     # Combine the result with the original image
     result = cv2.addWeighted(undist, 1, newwarp, 0.3, 0)
 
-    left_curverad,right_curverad = find_curvature(ploty, left_fit, right_fit, leftx, rightx)
+    left_curverad, right_curverad = find_curvature(ploty, left_fit, right_fit, leftx, rightx)
 
     cv2.putText(result, 'Left Radius of Curvature: %.2fm' % left_curverad, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1,
                 (255, 255, 255), 2)
@@ -288,8 +287,8 @@ def plot_image(undist, binary_warped, left_fit, right_fit, Minv,leftx,rightx):
 
 
 def image_pipeline(image):
-    left_fit, right_fit, binary_warped, Minv,leftx,rightx = sliding_window_pipeline(image)
-    return plot_image(image, binary_warped, left_fit, right_fit, Minv,leftx,rightx)
+    left_fit, right_fit, binary_warped, Minv, leftx, rightx = sliding_window_pipeline(image)
+    return plot_image(image, binary_warped, left_fit, right_fit, Minv, leftx, rightx)
 
 
 if __name__ == '__main__':
